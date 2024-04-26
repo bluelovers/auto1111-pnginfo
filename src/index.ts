@@ -8,17 +8,54 @@ const infoparser = (line: string) => {
   let quotes = false
   //actually no idea why there are trailing : sometimes?
   if (line.at(-1) === ':') line = line.slice(0, -1)
-  ;[...line].forEach(c => {
-    if (c === '"') { quotes = !quotes }
-    if (c === ':' && !quotes) { key = buffer,buffer='' }
-    else if (c === ',' && !quotes) {output[key.trim()] = buffer.slice(1),buffer=''}
-    else {buffer += c}
-  })
-  if (key) output[key.trim()] = buffer.slice(1)
+
+  let c_pre: string;
+
+  for (let i = 0; i < line.length; i++)
+  {
+    let c = line[i];
+    let sp = true;
+
+    if (c === '"')
+    {
+      quotes = !quotes
+    }
+
+    if (!quotes)
+    {
+      if (c === ':')
+      {
+        key = buffer.trim();
+        buffer = ''
+        sp = false;
+      }
+      else if (c === ',')
+      {
+        if (key === 'Cutoff targets' && c_pre !== ']')
+        {
+
+        }
+        else
+        {
+          output[key] = buffer.slice(1);
+          buffer = '';
+          sp = false;
+        }
+      }
+    }
+
+    if (sp)
+    {
+      buffer += c;
+    }
+
+    c_pre = c;
+  }
+  if (key) output[key] = buffer.slice(1)
   return output
 }
 
-const PNGINFO = (png: Uint8Array | string, cast_to_snake=true) => {
+const PNGINFO = (png: Uint8Array | string, cast_to_snake= false) => {
   let bin_str: string, bytes: Uint8Array
   if (typeof Buffer !== 'undefined' && Buffer.isBuffer(png)) {
     bytes = Uint8Array.from(png)
