@@ -1,10 +1,10 @@
 //get int32 from png compensating for endianness
-const i32 = (a,i) => new Uint32Array(new Uint8Array([...a.slice(i,i+4)].reverse()).buffer)[0]
+const i32 = (a: Uint8Array,i: number) => new Uint32Array(new Uint8Array([...a.slice(i,i+4)].reverse()).buffer)[0]
 
-const infoparser = line => {
-  let output = {}
+const infoparser = (line: string) => {
+  let output: Record<string, string> = {}
   let buffer = ''
-  let key
+  let key: string
   let quotes = false
   //actually no idea why there are trailing : sometimes?
   if (line.at(-1) === ':') line = line.slice(0, -1)
@@ -18,8 +18,8 @@ const infoparser = line => {
   return output
 }
 
-const PNGINFO = (png, cast_to_snake=true) => {
-  let bin_str, bytes
+const PNGINFO = (png: Uint8Array | string, cast_to_snake=true) => {
+  let bin_str: string, bytes: Uint8Array
   if (typeof Buffer !== 'undefined' && Buffer.isBuffer(png)) {
     bytes = Uint8Array.from(png)
     bin_str = png.toString()
@@ -28,8 +28,9 @@ const PNGINFO = (png, cast_to_snake=true) => {
     bin_str = png.toString()
   } else {
     bin_str = atob(png.slice(0,8192))
-    bytes = Uint8Array.from(bin_str, c => c.charCodeAt(0)) 
+    bytes = Uint8Array.from(bin_str, c => c.charCodeAt(0))
   }
+  // @ts-ignore
   const pngmagic = bytes.slice(0,8) == '137,80,78,71,13,10,26,10'
   if (!pngmagic) return
   let [ihdrSize,width,height] = [i32(bytes,8),i32(bytes,16),i32(bytes,20)]
@@ -48,8 +49,10 @@ const PNGINFO = (png, cast_to_snake=true) => {
   data = Object.fromEntries(
     Object.entries(data).map(([key,value])=>{
       let asNum = parseFloat(value)
+      // @ts-ignore
       let isNotNum = value-asNum
-      if (cast_to_snake) key = key.toLowerCase().replaceAll(' ','_') 
+      // @ts-ignore
+      if (cast_to_snake) key = key.toLowerCase().replaceAll(' ','_')
       let out = [key, isNotNum || isNaN(isNotNum)?value:asNum]
       return out
     })
