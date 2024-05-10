@@ -1,107 +1,133 @@
+import { crlf as e } from "crlf-normalize";
+
 import { splitSmartly as t } from "split-smartly2";
 
-function i32(t, e) {
-  return new Uint32Array(new Uint8Array([ ...t.slice(e, e + 4) ].reverse()).buffer)[0];
+function i32(e, t) {
+  return new Uint32Array(new Uint8Array([ ...e.slice(t, t + 4) ].reverse()).buffer)[0];
 }
 
-const e = /\r?\n/, n = /\x00\x00\x00\r?\n/;
-
-function _isRawVersionPlus(t) {
-  return n.test(t);
+function _normalizeInputRaw(t) {
+  return e(t).replace(/[\s\r\n]+$/g, "");
 }
 
-function _parseLine(t) {
-  const [, e, n] = t.match(/^([^:]+)\s*:\s*(.*)$/);
-  return [ e, n ];
+const n = /\r?\n/, r = /\x00\x00\x00\r?\n/;
+
+function _splitRawToLines(e) {
+  return e.split(_isRawVersionPlus(e) ? r : n);
 }
 
-function extractPromptAndInfoFromRaw(t) {
-  const r = _isRawVersionPlus(t);
-  let i = function _splitRawToLines(t) {
-    return t.split(_isRawVersionPlus(t) ? n : e);
-  }(t), o = "", s = "", a = "", p = [];
-  const c = i.slice();
-  if (r) {
-    var f, l;
-    if (i.length > 3) throw new TypeError;
-    let t = i.pop();
-    if (t.startsWith("Steps: ") && (a = t, t = void 0), null !== (f = t) && void 0 !== f || (t = i.pop()), 
-    t.startsWith("Negative prompt: ") && (s = t.slice(17), t = void 0), null !== (l = t) && void 0 !== l || (t = i.pop()), 
-    o = t, i.length) throw new TypeError;
-  } else {
-    let t = i.findIndex((t => t.match(/^Negative prompt:/)));
-    o = i.splice(0, t).join("\n").trim();
-    let e = i.findIndex((t => t.match(/^Steps:/)));
-    s = i.splice(0, e).join("\n").slice(16).trim(), a = i.splice(0, 1)[0], p = i;
+function _isRawVersionPlus(e) {
+  return r.test(e);
+}
+
+function _parseLine(e) {
+  const [, t, n] = e.match(/^([^:]+)\s*:\s*(.*)$/);
+  return [ t, n ];
+}
+
+function _parseInfoLine(e) {
+  return e = _normalizeInputRaw(e), t(e, [ "," ], {
+    brackets: !0,
+    trimSeparators: !0
+  }).reduce(((e, t) => {
+    if (null != t && t.length) {
+      const n = _parseLine(t);
+      e.push(n);
+    }
+    return e;
+  }), []);
+}
+
+function extractPromptAndInfoFromRaw(e) {
+  const t = _isRawVersionPlus(e = _normalizeInputRaw(e));
+  let n = _splitRawToLines(e), r = "", o = "", i = "";
+  const a = n.slice();
+  if (n.length) {
+    if (t) {
+      var s, p;
+      if (n.length > 3) throw new TypeError;
+      let e = n.pop();
+      if (e.startsWith("Steps: ") && (i = e, e = void 0), null !== (s = e) && void 0 !== s || (e = n.pop()), 
+      e.startsWith("Negative prompt: ") && (o = e.slice(17), e = void 0), null !== (p = e) && void 0 !== p || (e = n.pop()), 
+      r = e, n.length) throw new TypeError;
+    } else {
+      let e = n[n.length - 1];
+      if (e.startsWith("Steps: ") && (i = n.pop(), e = void 0), n.length) {
+        let t = -1;
+        for (let r = n.length - 1; r >= 0; r--) if (e = n[r], e.startsWith("Negative prompt: ")) {
+          t = r, n[r] = e.slice(17);
+          break;
+        }
+        -1 !== t && (o = n.splice(t).join("\n")), r = n.join("\n");
+      }
+    }
+    r = r.replace(/\x00\x00\x00/g, ""), o = o.replace(/\x00\x00\x00/g, "");
   }
-  return o = o.replace(/\x00\x00\x00/g, ""), s = s.replace(/\x00\x00\x00/g, ""), {
-    prompt: o,
-    negative_prompt: s,
-    infoline: a,
-    infoline_extra: p,
-    lines_raw: c
+  return {
+    prompt: r,
+    negative_prompt: o,
+    infoline: i,
+    infoline_extra: [],
+    lines_raw: a
   };
 }
 
-const r = /*#__PURE__*/ Uint8Array.from("tEXt", (t => t.charCodeAt(0))).join(",");
+const o = /*#__PURE__*/ Uint8Array.from("tEXt", (e => e.charCodeAt(0))).join(",");
 
-function infoparser(e, n) {
-  let r = [];
-  if (null != n && n.isIncludePrompts) {
-    const {prompt: t, negative_prompt: n, infoline: i} = extractPromptAndInfoFromRaw(e);
-    r.push([ "prompt", t ]), r.push([ "negative_prompt", n ]), e = i;
-  }
-  return Object.fromEntries(r.concat(function handleInfoEntries(t, e) {
-    const n = null == e ? void 0 : e.cast_to_snake, r = /^0\d/;
-    return t.map((([t, e]) => {
-      const i = parseFloat(e), o = r.test(e) || isNaN(i) || e - i != 0;
-      return n && (t = function keyToSnakeStyle1(t) {
-        return t.toLowerCase().replace(/ /g, "_");
-      }(t)), [ t, o ? e : i ];
-    }));
-  }(function _parseInfoLine(e) {
-    return t(e, [ "," ], {
-      brackets: !0,
-      trimSeparators: !0
-    }).map(_parseLine);
-  }(e), n)));
+function handleInfoEntries(e, t) {
+  const n = null == t ? void 0 : t.cast_to_snake, r = /^0\d/;
+  return e.map((([e, t]) => {
+    const o = parseFloat(t), i = r.test(t) || isNaN(o) || t - o != 0;
+    return n && (e = function keyToSnakeStyle1(e) {
+      return e.toLowerCase().replace(/ /g, "_");
+    }(e)), [ e, i ? t : o ];
+  }));
 }
 
-function PNGINFO(t, e = !1) {
-  let n = function inputToBytes(t) {
-    return "undefined" != typeof Buffer && Buffer.isBuffer(t) || t instanceof Uint8Array ? t : Uint8Array.from(atob(t.slice(0, 8192)), (t => t.charCodeAt(0)));
-  }(t);
-  const i = function extractRawFromBytes(t) {
-    if ("137,80,78,71,13,10,26,10" !== t.slice(0, 8).join(",")) return;
-    const [e, n, i] = [ i32(t, 8), i32(t, 16), i32(t, 20) ], o = 8 + e + 12;
-    if (t.slice(o + 4, o + 8).join(",") !== r) return;
-    const s = i32(t, o);
+function parseFromRawInfo(e, t) {
+  let n = [];
+  if (null != t && t.isIncludePrompts) {
+    const {prompt: t, negative_prompt: r, infoline: o} = extractPromptAndInfoFromRaw(e);
+    n.push([ "prompt", t ]), n.push([ "negative_prompt", r ]), e = o;
+  }
+  return Object.fromEntries(n.concat(handleInfoEntries(_parseInfoLine(e), t)));
+}
+
+function parseFromImageBuffer(e, t = !1) {
+  let n = function inputToBytes(e) {
+    return "undefined" != typeof Buffer && Buffer.isBuffer(e) || e instanceof Uint8Array ? e : Uint8Array.from(atob(e.slice(0, 8192)), (e => e.charCodeAt(0)));
+  }(e);
+  const r = function extractRawFromBytes(e) {
+    if ("137,80,78,71,13,10,26,10" !== e.slice(0, 8).join(",")) return;
+    const [t, n, r] = [ i32(e, 8), i32(e, 16), i32(e, 20) ], i = 8 + t + 12;
+    if (e.slice(i + 4, i + 8).join(",") !== o) return;
+    const a = i32(e, i);
     return {
       width: n,
-      height: i,
-      raw_info: function uint8arrayToString(t) {
-        return (new TextDecoder).decode(t);
-      }(t.slice(o + 8 + 11, o + 8 + s))
+      height: r,
+      raw_info: function uint8arrayToString(e) {
+        return (new TextDecoder).decode(e);
+      }(e.slice(i + 8 + 11, i + 8 + a))
     };
   }(n);
-  if (!i) return;
-  const {raw_info: o, width: s, height: a} = i, {prompt: p, negative_prompt: c, infoline: f, infoline_extra: l} = extractPromptAndInfoFromRaw(o);
+  if (!r) return;
+  const {raw_info: i, width: a, height: s} = r, {prompt: p, negative_prompt: f, infoline: l, infoline_extra: c} = extractPromptAndInfoFromRaw(i);
   return {
     metadata: {
-      width: s,
-      height: a,
-      extra: l,
-      raw_info: o
+      width: a,
+      height: s,
+      extra: c,
+      raw_info: i
     },
     pnginfo: {
       prompt: p,
-      negative_prompt: c,
-      ...infoparser(f, {
-        cast_to_snake: e
+      negative_prompt: f,
+      ...parseFromRawInfo(l, {
+        cast_to_snake: t
       })
     }
   };
 }
 
-export { PNGINFO, PNGINFO as default, infoparser };
+export { _parseInfoLine, _parseLine, _splitRawToLines, parseFromImageBuffer as default, extractPromptAndInfoFromRaw, handleInfoEntries, parseFromImageBuffer, parseFromRawInfo };
 //# sourceMappingURL=index.esm.mjs.map

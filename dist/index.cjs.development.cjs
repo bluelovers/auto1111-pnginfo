@@ -1,5 +1,8 @@
 'use strict';
 
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var crlfNormalize = require('crlf-normalize');
 var splitSmartly2 = require('split-smartly2');
 
 function inputToBytes(png) {
@@ -10,6 +13,10 @@ function inputToBytes(png) {
 }
 function i32(a, i) {
   return new Uint32Array(new Uint8Array([...a.slice(i, i + 4)].reverse()).buffer)[0];
+}
+function _normalizeInputRaw(raw_info) {
+  raw_info = crlfNormalize.crlf(raw_info).replace(/[\s\r\n]+$/g, '');
+  return raw_info;
 }
 
 const RE_LINE_SPLIT_BASE = /\r?\n/;
@@ -72,11 +79,18 @@ function _parseLine(line) {
  * ```
  */
 function _parseInfoLine(infoline) {
+  infoline = _normalizeInputRaw(infoline);
   const entries = splitSmartly2.splitSmartly(infoline, [','], {
     brackets: true,
     trimSeparators: true
   });
-  return entries.map(_parseLine);
+  return entries.reduce((entries, line) => {
+    if (line !== null && line !== void 0 && line.length) {
+      const entry = _parseLine(line);
+      entries.push(entry);
+    }
+    return entries;
+  }, []);
 }
 /**
  * Extracts prompt, negative prompt, info line, and extra info from a raw info string.
@@ -109,6 +123,7 @@ function _parseInfoLine(infoline) {
  * ```
  */
 function extractPromptAndInfoFromRaw(raw_info) {
+  raw_info = _normalizeInputRaw(raw_info);
   const isPlus = _isRawVersionPlus(raw_info);
   let lines = _splitRawToLines(raw_info);
   let prompt = '';
@@ -116,36 +131,52 @@ function extractPromptAndInfoFromRaw(raw_info) {
   let infoline = '';
   let infoline_extra = [];
   const lines_raw = lines.slice();
-  if (isPlus) {
-    var _line, _line2;
-    if (lines.length > 3) {
-      throw new TypeError();
+  if (lines.length) {
+    if (isPlus) {
+      var _line, _line2;
+      if (lines.length > 3) {
+        throw new TypeError();
+      }
+      let line = lines.pop();
+      if (line.startsWith('Steps: ')) {
+        infoline = line;
+        line = void 0;
+      }
+      (_line = line) !== null && _line !== void 0 ? _line : line = lines.pop();
+      if (line.startsWith('Negative prompt: ')) {
+        negative_prompt = line.slice('Negative prompt: '.length);
+        line = void 0;
+      }
+      (_line2 = line) !== null && _line2 !== void 0 ? _line2 : line = lines.pop();
+      prompt = line;
+      if (lines.length) {
+        throw new TypeError();
+      }
+    } else {
+      let line = lines[lines.length - 1];
+      if (line.startsWith('Steps: ')) {
+        infoline = lines.pop();
+        line = void 0;
+      }
+      if (lines.length) {
+        let idx = -1;
+        for (let i = lines.length - 1; i >= 0; i--) {
+          line = lines[i];
+          if (line.startsWith('Negative prompt: ')) {
+            idx = i;
+            lines[i] = line.slice('Negative prompt: '.length);
+            break;
+          }
+        }
+        if (idx !== -1) {
+          negative_prompt = lines.splice(idx).join('\n');
+        }
+        prompt = lines.join('\n');
+      }
     }
-    let line = lines.pop();
-    if (line.startsWith('Steps: ')) {
-      infoline = line;
-      line = void 0;
-    }
-    (_line = line) !== null && _line !== void 0 ? _line : line = lines.pop();
-    if (line.startsWith('Negative prompt: ')) {
-      negative_prompt = line.slice('Negative prompt: '.length);
-      line = void 0;
-    }
-    (_line2 = line) !== null && _line2 !== void 0 ? _line2 : line = lines.pop();
-    prompt = line;
-    if (lines.length) {
-      throw new TypeError();
-    }
-  } else {
-    let negative_prompt_index = lines.findIndex(a => a.match(/^Negative prompt:/));
-    prompt = lines.splice(0, negative_prompt_index).join('\n').trim();
-    let steps_index = lines.findIndex(a => a.match(/^Steps:/));
-    negative_prompt = lines.splice(0, steps_index).join('\n').slice('Negative prompt:'.length).trim();
-    infoline = lines.splice(0, 1)[0];
-    infoline_extra = lines;
+    prompt = prompt.replace(/\x00\x00\x00/g, '');
+    negative_prompt = negative_prompt.replace(/\x00\x00\x00/g, '');
   }
-  prompt = prompt.replace(/\x00\x00\x00/g, '');
-  negative_prompt = negative_prompt.replace(/\x00\x00\x00/g, '');
   return {
     prompt,
     negative_prompt,
@@ -199,7 +230,25 @@ function handleInfoEntries(entries, opts) {
   });
 }
 
-function infoparser(line, opts) {
+/**
+ * Parses raw info line and returns an object with the extracted data.
+ *
+ * @param line - The raw info line to parse.
+ * @param opts - Optional parameters.
+ * @param opts.cast_to_snake - If true, keys will be converted to snake_case. Default is false.
+ * @param opts.isIncludePrompts - If true, prompt and negative_prompt will be included in the result. Default is false.
+ *
+ * @returns An object containing the extracted data.
+ *
+ * @example
+ * ```typescript
+ * const rawInfo = "my prompt, Negative prompt: my negative prompt, width: 512, height: 512";
+ * const parsedData = parseFromRawInfo(rawInfo, { isIncludePrompts: true });
+ * console.log(parsedData);
+ * // Output: { prompt: 'my prompt', Negative prompt: 'my negative prompt', width: 512, height: 512 }
+ * ```
+ */
+function parseFromRawInfo(line, opts) {
   let base = [];
   if (opts !== null && opts !== void 0 && opts.isIncludePrompts) {
     const {
@@ -216,14 +265,14 @@ function infoparser(line, opts) {
 /**
  * @example
  * import fs from 'fs/promises'
- * import PNGINFO from 'auto1111-pnginfo'
+ * import parseFromImageBuffer from '@bluelovers/auto1111-pnginfo'
  *
  * const file = await fs.readFile('generate_waifu.png')
- * const info = PNGINFO(file)
+ * const info = parseFromImageBuffer(file)
  *
  * console.log(info)
  */
-function PNGINFO(png, cast_to_snake = false) {
+function parseFromImageBuffer(png, cast_to_snake = false) {
   let bytes = inputToBytes(png);
   const raw = extractRawFromBytes(bytes);
   if (!raw) return;
@@ -238,7 +287,7 @@ function PNGINFO(png, cast_to_snake = false) {
     infoline,
     infoline_extra
   } = extractPromptAndInfoFromRaw(raw_info);
-  let data = infoparser(infoline, {
+  let data = parseFromRawInfo(infoline, {
     cast_to_snake
   });
   let output = {
@@ -256,22 +305,13 @@ function PNGINFO(png, cast_to_snake = false) {
   };
   return output;
 }
-// @ts-ignore
-{
-  Object.defineProperty(PNGINFO, "__esModule", {
-    value: true
-  });
-  Object.defineProperty(PNGINFO, 'PNGINFO', {
-    value: PNGINFO
-  });
-  Object.defineProperty(PNGINFO, 'default', {
-    value: PNGINFO
-  });
-  Object.defineProperty(PNGINFO, 'infoparser', {
-    value: infoparser
-  });
-}
 
-// @ts-ignore
-module.exports = PNGINFO;
+exports._parseInfoLine = _parseInfoLine;
+exports._parseLine = _parseLine;
+exports._splitRawToLines = _splitRawToLines;
+exports.default = parseFromImageBuffer;
+exports.extractPromptAndInfoFromRaw = extractPromptAndInfoFromRaw;
+exports.handleInfoEntries = handleInfoEntries;
+exports.parseFromImageBuffer = parseFromImageBuffer;
+exports.parseFromRawInfo = parseFromRawInfo;
 //# sourceMappingURL=index.cjs.development.cjs.map
