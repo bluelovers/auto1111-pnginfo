@@ -15,7 +15,7 @@ function i32(a, i) {
   return new Uint32Array(new Uint8Array([...a.slice(i, i + 4)].reverse()).buffer)[0];
 }
 function _normalizeInputRaw(raw_info) {
-  raw_info = crlfNormalize.crlf(raw_info).replace(/[\s\r\n]+$/g, '');
+  raw_info = crlfNormalize.crlf(raw_info).replace(/[ \t\xa0]+(?=\n)/g, '').replace(/\n{3,}/g, '\n\n').replace(/^[\r\n]+|[\s\r\n]+$/g, '');
   return raw_info;
 }
 
@@ -306,6 +306,7 @@ function parseFromImageBuffer(png, cast_to_snake = false) {
   return output;
 }
 
+exports._normalizeInputRaw = _normalizeInputRaw;
 exports._parseInfoLine = _parseInfoLine;
 exports._parseLine = _parseLine;
 exports._splitRawToLines = _splitRawToLines;

@@ -1,6 +1,6 @@
 {
   "name": "@bluelovers/auto1111-pnginfo",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": " an extreremely minimalistic js library to extract PNG info from auto1111 gens",
   "keywords": [
     "automatic1111",

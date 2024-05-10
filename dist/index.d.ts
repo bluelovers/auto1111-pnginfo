@@ -1,3 +1,4 @@
+export declare function _normalizeInputRaw(raw_info: string): string;
 /**
  * `${key}: ${value}`
  */
@@ -92,6 +93,11 @@ export interface IOptionsInfoparser {
 	 */
 	isIncludePrompts?: boolean;
 }
+export interface IRecordInfo {
+	prompt: string;
+	negative_prompt: string;
+	[k: string]: string | number;
+}
 /**
  * Parses raw info line and returns an object with the extracted data.
  *
@@ -110,9 +116,7 @@ export interface IOptionsInfoparser {
  * // Output: { prompt: 'my prompt', Negative prompt: 'my negative prompt', width: 512, height: 512 }
  * ```
  */
-export declare function parseFromRawInfo(line: string, opts?: IOptionsInfoparser): {
-	[k: string]: string | number;
-};
+export declare function parseFromRawInfo(line: string, opts?: IOptionsInfoparser): IRecordInfo;
 /**
  * @example
  * import fs from 'fs/promises'

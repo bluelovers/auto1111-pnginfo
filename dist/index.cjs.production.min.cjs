@@ -11,7 +11,7 @@ function i32(e, r) {
 }
 
 function _normalizeInputRaw(r) {
-  return e.crlf(r).replace(/[\s\r\n]+$/g, "");
+  return e.crlf(r).replace(/[ \t\xa0]+(?=\n)/g, "").replace(/\n{3,}/g, "\n\n").replace(/^[\r\n]+|[\s\r\n]+$/g, "");
 }
 
 const t = /\r?\n/, n = /\x00\x00\x00\r?\n/;
@@ -133,8 +133,8 @@ function parseFromImageBuffer(e, r = !1) {
   };
 }
 
-exports._parseInfoLine = _parseInfoLine, exports._parseLine = _parseLine, exports._splitRawToLines = _splitRawToLines, 
-exports.default = parseFromImageBuffer, exports.extractPromptAndInfoFromRaw = extractPromptAndInfoFromRaw, 
-exports.handleInfoEntries = handleInfoEntries, exports.parseFromImageBuffer = parseFromImageBuffer, 
-exports.parseFromRawInfo = parseFromRawInfo;
+exports._normalizeInputRaw = _normalizeInputRaw, exports._parseInfoLine = _parseInfoLine, 
+exports._parseLine = _parseLine, exports._splitRawToLines = _splitRawToLines, exports.default = parseFromImageBuffer, 
+exports.extractPromptAndInfoFromRaw = extractPromptAndInfoFromRaw, exports.handleInfoEntries = handleInfoEntries, 
+exports.parseFromImageBuffer = parseFromImageBuffer, exports.parseFromRawInfo = parseFromRawInfo;
 //# sourceMappingURL=index.cjs.production.min.cjs.map

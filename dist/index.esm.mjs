@@ -1,19 +1,19 @@
 import { crlf as e } from "crlf-normalize";
 
-import { splitSmartly as t } from "split-smartly2";
+import { splitSmartly as n } from "split-smartly2";
 
-function i32(e, t) {
-  return new Uint32Array(new Uint8Array([ ...e.slice(t, t + 4) ].reverse()).buffer)[0];
+function i32(e, n) {
+  return new Uint32Array(new Uint8Array([ ...e.slice(n, n + 4) ].reverse()).buffer)[0];
 }
 
-function _normalizeInputRaw(t) {
-  return e(t).replace(/[\s\r\n]+$/g, "");
+function _normalizeInputRaw(n) {
+  return e(n).replace(/[ \t\xa0]+(?=\n)/g, "").replace(/\n{3,}/g, "\n\n").replace(/^[\r\n]+|[\s\r\n]+$/g, "");
 }
 
-const n = /\r?\n/, r = /\x00\x00\x00\r?\n/;
+const t = /\r?\n/, r = /\x00\x00\x00\r?\n/;
 
 function _splitRawToLines(e) {
-  return e.split(_isRawVersionPlus(e) ? r : n);
+  return e.split(_isRawVersionPlus(e) ? r : t);
 }
 
 function _isRawVersionPlus(e) {
@@ -21,44 +21,44 @@ function _isRawVersionPlus(e) {
 }
 
 function _parseLine(e) {
-  const [, t, n] = e.match(/^([^:]+)\s*:\s*(.*)$/);
-  return [ t, n ];
+  const [, n, t] = e.match(/^([^:]+)\s*:\s*(.*)$/);
+  return [ n, t ];
 }
 
 function _parseInfoLine(e) {
-  return e = _normalizeInputRaw(e), t(e, [ "," ], {
+  return e = _normalizeInputRaw(e), n(e, [ "," ], {
     brackets: !0,
     trimSeparators: !0
-  }).reduce(((e, t) => {
-    if (null != t && t.length) {
-      const n = _parseLine(t);
-      e.push(n);
+  }).reduce(((e, n) => {
+    if (null != n && n.length) {
+      const t = _parseLine(n);
+      e.push(t);
     }
     return e;
   }), []);
 }
 
 function extractPromptAndInfoFromRaw(e) {
-  const t = _isRawVersionPlus(e = _normalizeInputRaw(e));
-  let n = _splitRawToLines(e), r = "", o = "", i = "";
-  const a = n.slice();
-  if (n.length) {
-    if (t) {
+  const n = _isRawVersionPlus(e = _normalizeInputRaw(e));
+  let t = _splitRawToLines(e), r = "", o = "", i = "";
+  const a = t.slice();
+  if (t.length) {
+    if (n) {
       var s, p;
-      if (n.length > 3) throw new TypeError;
-      let e = n.pop();
-      if (e.startsWith("Steps: ") && (i = e, e = void 0), null !== (s = e) && void 0 !== s || (e = n.pop()), 
-      e.startsWith("Negative prompt: ") && (o = e.slice(17), e = void 0), null !== (p = e) && void 0 !== p || (e = n.pop()), 
-      r = e, n.length) throw new TypeError;
+      if (t.length > 3) throw new TypeError;
+      let e = t.pop();
+      if (e.startsWith("Steps: ") && (i = e, e = void 0), null !== (s = e) && void 0 !== s || (e = t.pop()), 
+      e.startsWith("Negative prompt: ") && (o = e.slice(17), e = void 0), null !== (p = e) && void 0 !== p || (e = t.pop()), 
+      r = e, t.length) throw new TypeError;
     } else {
-      let e = n[n.length - 1];
-      if (e.startsWith("Steps: ") && (i = n.pop(), e = void 0), n.length) {
-        let t = -1;
-        for (let r = n.length - 1; r >= 0; r--) if (e = n[r], e.startsWith("Negative prompt: ")) {
-          t = r, n[r] = e.slice(17);
+      let e = t[t.length - 1];
+      if (e.startsWith("Steps: ") && (i = t.pop(), e = void 0), t.length) {
+        let n = -1;
+        for (let r = t.length - 1; r >= 0; r--) if (e = t[r], e.startsWith("Negative prompt: ")) {
+          n = r, t[r] = e.slice(17);
           break;
         }
-        -1 !== t && (o = n.splice(t).join("\n")), r = n.join("\n");
+        -1 !== n && (o = t.splice(n).join("\n")), r = t.join("\n");
       }
     }
     r = r.replace(/\x00\x00\x00/g, ""), o = o.replace(/\x00\x00\x00/g, "");
@@ -74,42 +74,42 @@ function extractPromptAndInfoFromRaw(e) {
 
 const o = /*#__PURE__*/ Uint8Array.from("tEXt", (e => e.charCodeAt(0))).join(",");
 
-function handleInfoEntries(e, t) {
-  const n = null == t ? void 0 : t.cast_to_snake, r = /^0\d/;
-  return e.map((([e, t]) => {
-    const o = parseFloat(t), i = r.test(t) || isNaN(o) || t - o != 0;
-    return n && (e = function keyToSnakeStyle1(e) {
+function handleInfoEntries(e, n) {
+  const t = null == n ? void 0 : n.cast_to_snake, r = /^0\d/;
+  return e.map((([e, n]) => {
+    const o = parseFloat(n), i = r.test(n) || isNaN(o) || n - o != 0;
+    return t && (e = function keyToSnakeStyle1(e) {
       return e.toLowerCase().replace(/ /g, "_");
-    }(e)), [ e, i ? t : o ];
+    }(e)), [ e, i ? n : o ];
   }));
 }
 
-function parseFromRawInfo(e, t) {
-  let n = [];
-  if (null != t && t.isIncludePrompts) {
-    const {prompt: t, negative_prompt: r, infoline: o} = extractPromptAndInfoFromRaw(e);
-    n.push([ "prompt", t ]), n.push([ "negative_prompt", r ]), e = o;
+function parseFromRawInfo(e, n) {
+  let t = [];
+  if (null != n && n.isIncludePrompts) {
+    const {prompt: n, negative_prompt: r, infoline: o} = extractPromptAndInfoFromRaw(e);
+    t.push([ "prompt", n ]), t.push([ "negative_prompt", r ]), e = o;
   }
-  return Object.fromEntries(n.concat(handleInfoEntries(_parseInfoLine(e), t)));
+  return Object.fromEntries(t.concat(handleInfoEntries(_parseInfoLine(e), n)));
 }
 
-function parseFromImageBuffer(e, t = !1) {
-  let n = function inputToBytes(e) {
+function parseFromImageBuffer(e, n = !1) {
+  let t = function inputToBytes(e) {
     return "undefined" != typeof Buffer && Buffer.isBuffer(e) || e instanceof Uint8Array ? e : Uint8Array.from(atob(e.slice(0, 8192)), (e => e.charCodeAt(0)));
   }(e);
   const r = function extractRawFromBytes(e) {
     if ("137,80,78,71,13,10,26,10" !== e.slice(0, 8).join(",")) return;
-    const [t, n, r] = [ i32(e, 8), i32(e, 16), i32(e, 20) ], i = 8 + t + 12;
+    const [n, t, r] = [ i32(e, 8), i32(e, 16), i32(e, 20) ], i = 8 + n + 12;
     if (e.slice(i + 4, i + 8).join(",") !== o) return;
     const a = i32(e, i);
     return {
-      width: n,
+      width: t,
       height: r,
       raw_info: function uint8arrayToString(e) {
         return (new TextDecoder).decode(e);
       }(e.slice(i + 8 + 11, i + 8 + a))
     };
-  }(n);
+  }(t);
   if (!r) return;
   const {raw_info: i, width: a, height: s} = r, {prompt: p, negative_prompt: f, infoline: l, infoline_extra: c} = extractPromptAndInfoFromRaw(i);
   return {
@@ -123,11 +123,11 @@ function parseFromImageBuffer(e, t = !1) {
       prompt: p,
       negative_prompt: f,
       ...parseFromRawInfo(l, {
-        cast_to_snake: t
+        cast_to_snake: n
       })
     }
   };
 }
 
-export { _parseInfoLine, _parseLine, _splitRawToLines, parseFromImageBuffer as default, extractPromptAndInfoFromRaw, handleInfoEntries, parseFromImageBuffer, parseFromRawInfo };
+export { _normalizeInputRaw, _parseInfoLine, _parseLine, _splitRawToLines, parseFromImageBuffer as default, extractPromptAndInfoFromRaw, handleInfoEntries, parseFromImageBuffer, parseFromRawInfo };
 //# sourceMappingURL=index.esm.mjs.map

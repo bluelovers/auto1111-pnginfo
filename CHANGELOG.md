@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.2](https://github.com/thot-experiment/pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.1...@bluelovers/auto1111-pnginfo@2.0.2) (2024-05-10)
+
+
+
+### 🚨　Tests
+
+* update test ([fb173af](https://github.com/thot-experiment/pnginfo/commit/fb173af84008852312ebb6a0efd76628c5abc6fc))
+
+
+
 ## [2.0.1](https://github.com/thot-experiment/pnginfo/compare/@bluelovers/auto1111-pnginfo@1.0.5...@bluelovers/auto1111-pnginfo@2.0.1) (2024-05-10)
 
 
