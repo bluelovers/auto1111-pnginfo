@@ -1,16 +1,32 @@
+export interface IOptionsInfoparser {
+	cast_to_snake?: boolean;
+	isIncludePrompts?: boolean;
+}
+export declare function infoparser(line: string, opts?: IOptionsInfoparser): {
+	[k: string]: string | number;
+};
 /**
- * get int32 from png compensating for endianness
+ * @example
+ * import fs from 'fs/promises'
+ * import PNGINFO from 'auto1111-pnginfo'
+ *
+ * const file = await fs.readFile('generate_waifu.png')
+ * const info = PNGINFO(file)
+ *
+ * console.log(info)
  */
-export declare function i32(a: Uint8Array, i: number): number;
-export declare function infoparser(line: string): Record<string, string>;
 export declare function PNGINFO(png: Uint8Array | string, cast_to_snake?: boolean): {
-	width: number;
-	height: number;
-	prompt: string;
-	negative_prompt: string;
-	extra: string[];
-	raw_info: string;
-} & Record<string, string>;
+	metadata: {
+		width: number;
+		height: number;
+		extra: string[];
+		raw_info: string;
+	};
+	pnginfo: {
+		prompt: string;
+		negative_prompt: string;
+	};
+};
 
 export {
 	PNGINFO as default,

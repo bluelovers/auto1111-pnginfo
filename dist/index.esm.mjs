@@ -1,38 +1,107 @@
-function i32(e, t) {
-  return new Uint32Array(new Uint8Array([ ...e.slice(t, t + 4) ].reverse()).buffer)[0];
+import { splitSmartly as t } from "split-smartly2";
+
+function i32(t, e) {
+  return new Uint32Array(new Uint8Array([ ...t.slice(e, e + 4) ].reverse()).buffer)[0];
 }
 
-function infoparser(e) {
-  let t, r, i = {}, n = "", f = !1;
-  ":" === e.at(-1) && (e = e.slice(0, -1));
-  for (let s = 0; s < e.length; s++) {
-    let a = e[s], o = !0;
-    '"' === a && (f = !f), f || (":" === a ? (t = n.trim(), n = "", o = !1) : "," === a && ("Cutoff targets" === t && "]" !== r || (i[t] = n.slice(1), 
-    n = "", o = !1))), o && (n += a), r = a;
+const e = /\r?\n/, n = /\x00\x00\x00\r?\n/;
+
+function _isRawVersionPlus(t) {
+  return n.test(t);
+}
+
+function _parseLine(t) {
+  const [, e, n] = t.match(/^([^:]+)\s*:\s*(.*)$/);
+  return [ e, n ];
+}
+
+function extractPromptAndInfoFromRaw(t) {
+  const r = _isRawVersionPlus(t);
+  let i = function _splitRawToLines(t) {
+    return t.split(_isRawVersionPlus(t) ? n : e);
+  }(t), o = "", s = "", a = "", p = [];
+  const c = i.slice();
+  if (r) {
+    var f, l;
+    if (i.length > 3) throw new TypeError;
+    let t = i.pop();
+    if (t.startsWith("Steps: ") && (a = t, t = void 0), null !== (f = t) && void 0 !== f || (t = i.pop()), 
+    t.startsWith("Negative prompt: ") && (s = t.slice(17), t = void 0), null !== (l = t) && void 0 !== l || (t = i.pop()), 
+    o = t, i.length) throw new TypeError;
+  } else {
+    let t = i.findIndex((t => t.match(/^Negative prompt:/)));
+    o = i.splice(0, t).join("\n").trim();
+    let e = i.findIndex((t => t.match(/^Steps:/)));
+    s = i.splice(0, e).join("\n").slice(16).trim(), a = i.splice(0, 1)[0], p = i;
   }
-  return t && (i[t] = n.slice(1)), i;
+  return o = o.replace(/\x00\x00\x00/g, ""), s = s.replace(/\x00\x00\x00/g, ""), {
+    prompt: o,
+    negative_prompt: s,
+    infoline: a,
+    infoline_extra: p,
+    lines_raw: c
+  };
 }
 
-function PNGINFO(e, t = !1) {
-  let r, i;
-  if ("undefined" != typeof Buffer && Buffer.isBuffer(e) ? (i = Uint8Array.from(e), 
-  r = e.toString()) : e instanceof Uint8Array ? (i = e, r = e.toString()) : (r = atob(e.slice(0, 8192)), 
-  i = Uint8Array.from(r, (e => e.charCodeAt(0)))), "137,80,78,71,13,10,26,10" != i.slice(0, 8)) return;
-  let [n, f, s] = [ i32(i, 8), i32(i, 16), i32(i, 20) ], a = 8 + n + 12;
-  if ("tEXt" != r.slice(a + 4, a + 8)) return;
-  let o = i32(i, a), l = r.slice(a + 8 + 11, a + 8 + o), c = l.split("\n"), p = c.findIndex((e => e.match(/^Negative prompt:/))), u = c.splice(0, p).join("\n").trim(), m = c.findIndex((e => e.match(/^Steps:/))), d = c.splice(0, m).join("\n").slice(16).trim(), N = infoparser(c.splice(0, 1)[0]);
-  return N = Object.fromEntries(Object.entries(N).map((([e, r]) => {
-    let i = parseFloat(r), n = r - i;
-    return t && (e = e.toLowerCase().replaceAll(" ", "_")), [ e, n || isNaN(n) ? r : i ];
-  }))), Object.assign({
-    width: f,
-    height: s,
-    prompt: u,
-    negative_prompt: d,
-    extra: c,
-    raw_info: l
-  }, N);
+const r = /*#__PURE__*/ Uint8Array.from("tEXt", (t => t.charCodeAt(0))).join(",");
+
+function infoparser(e, n) {
+  let r = [];
+  if (null != n && n.isIncludePrompts) {
+    const {prompt: t, negative_prompt: n, infoline: i} = extractPromptAndInfoFromRaw(e);
+    r.push([ "prompt", t ]), r.push([ "negative_prompt", n ]), e = i;
+  }
+  return Object.fromEntries(r.concat(function handleInfoEntries(t, e) {
+    const n = null == e ? void 0 : e.cast_to_snake, r = /^0\d/;
+    return t.map((([t, e]) => {
+      const i = parseFloat(e), o = r.test(e) || isNaN(i) || e - i != 0;
+      return n && (t = function keyToSnakeStyle1(t) {
+        return t.toLowerCase().replace(/ /g, "_");
+      }(t)), [ t, o ? e : i ];
+    }));
+  }(function _parseInfoLine(e) {
+    return t(e, [ "," ], {
+      brackets: !0,
+      trimSeparators: !0
+    }).map(_parseLine);
+  }(e), n)));
 }
 
-export { PNGINFO, PNGINFO as default, i32, infoparser };
+function PNGINFO(t, e = !1) {
+  let n = function inputToBytes(t) {
+    return "undefined" != typeof Buffer && Buffer.isBuffer(t) || t instanceof Uint8Array ? t : Uint8Array.from(atob(t.slice(0, 8192)), (t => t.charCodeAt(0)));
+  }(t);
+  const i = function extractRawFromBytes(t) {
+    if ("137,80,78,71,13,10,26,10" !== t.slice(0, 8).join(",")) return;
+    const [e, n, i] = [ i32(t, 8), i32(t, 16), i32(t, 20) ], o = 8 + e + 12;
+    if (t.slice(o + 4, o + 8).join(",") !== r) return;
+    const s = i32(t, o);
+    return {
+      width: n,
+      height: i,
+      raw_info: function uint8arrayToString(t) {
+        return (new TextDecoder).decode(t);
+      }(t.slice(o + 8 + 11, o + 8 + s))
+    };
+  }(n);
+  if (!i) return;
+  const {raw_info: o, width: s, height: a} = i, {prompt: p, negative_prompt: c, infoline: f, infoline_extra: l} = extractPromptAndInfoFromRaw(o);
+  return {
+    metadata: {
+      width: s,
+      height: a,
+      extra: l,
+      raw_info: o
+    },
+    pnginfo: {
+      prompt: p,
+      negative_prompt: c,
+      ...infoparser(f, {
+        cast_to_snake: e
+      })
+    }
+  };
+}
+
+export { PNGINFO, PNGINFO as default, infoparser };
 //# sourceMappingURL=index.esm.mjs.map
