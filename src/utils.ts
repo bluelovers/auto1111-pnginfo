@@ -1,3 +1,4 @@
+import { crlf } from 'crlf-normalize';
 
 export function inputToBytes(png: Uint8Array | string)
 {
@@ -31,4 +32,11 @@ export function inputToBytes(png: Uint8Array | string)
 export function i32(a: Uint8Array, i: number)
 {
 	return new Uint32Array(new Uint8Array([...a.slice(i, i + 4)].reverse()).buffer)[0];
+}
+
+export function _normalizeInputRaw(raw_info: string)
+{
+	raw_info = crlf(raw_info).replace(/[\s\r\n]+$/g, '');
+
+	return raw_info
 }

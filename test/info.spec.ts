@@ -5,7 +5,7 @@
 
 import { basename, extname, join } from 'path';
 import { readFileSync } from 'fs';
-import PNGINFO from '../src/index';
+import parseFromImageBuffer from '../src/index';
 
 beforeAll(async () =>
 {
@@ -24,13 +24,13 @@ describe(basename(__filename, extname(__filename)), () =>
 
 	test(`PNGINFO`, async () =>
 	{
-		expect(PNGINFO(buf)).toMatchSnapshot();
+		expect(parseFromImageBuffer(buf)).toMatchSnapshot();
 
 	});
 
 	test(`PNGINFO:cast_to_snake`, async () =>
 	{
-		expect(PNGINFO(buf, true)).toMatchSnapshot();
+		expect(parseFromImageBuffer(buf, true)).toMatchSnapshot();
 	});
 
 })

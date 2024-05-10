@@ -1,5 +1,6 @@
 import { splitSmartly } from 'split-smartly2';
 import { _isRawVersionPlus, _splitRawToLines } from './split';
+import { _normalizeInputRaw } from './utils';
 
 /**
  * `${key}: ${value}`
@@ -30,12 +31,25 @@ export function _parseLine(line: string)
  */
 export function _parseInfoLine(infoline: string)
 {
+	infoline = _normalizeInputRaw(infoline);
+
 	const entries = splitSmartly(infoline, [','], {
 		brackets: true,
 		trimSeparators: true,
 	}) as string[];
 
-	return entries.map(_parseLine)
+	return entries.reduce((entries, line) => {
+		/**
+		 * avoid empty line
+		 */
+		if (line?.length)
+		{
+			const entry = _parseLine(line);
+			entries.push(entry)
+		}
+
+		return entries
+	}, [] as (readonly [string, string])[])
 }
 
 /**
@@ -70,6 +84,8 @@ export function _parseInfoLine(infoline: string)
  */
 export function extractPromptAndInfoFromRaw(raw_info: string)
 {
+	raw_info = _normalizeInputRaw(raw_info);
+
 	const isPlus = _isRawVersionPlus(raw_info);
 	let lines = _splitRawToLines(raw_info);
 
@@ -80,52 +96,75 @@ export function extractPromptAndInfoFromRaw(raw_info: string)
 
 	const lines_raw = lines.slice();
 
-	if (isPlus)
+	if (lines.length)
 	{
-		if (lines.length > 3)
+		if (isPlus)
 		{
-			throw new TypeError()
+			if (lines.length > 3)
+			{
+				throw new TypeError()
+			}
+
+			let line = lines.pop();
+
+			if (line.startsWith('Steps: '))
+			{
+				infoline = line;
+				line = void 0
+			}
+
+			line ??= lines.pop();
+
+			if (line.startsWith('Negative prompt: '))
+			{
+				negative_prompt = line.slice('Negative prompt: '.length);
+				line = void 0
+			}
+
+			line ??= lines.pop();
+
+			prompt = line;
+
+			if (lines.length)
+			{
+				throw new TypeError()
+			}
+		}
+		else
+		{
+			let line = lines[lines.length - 1];
+			if (line.startsWith('Steps: '))
+			{
+				infoline = lines.pop();
+				line = void 0
+			}
+
+			if (lines.length)
+			{
+				let idx = -1;
+				for (let i = lines.length - 1; i >= 0; i--)
+				{
+					line = lines[i];
+					if (line.startsWith('Negative prompt: '))
+					{
+						idx = i;
+						lines[i] = line.slice('Negative prompt: '.length);
+						break;
+					}
+				}
+
+				if (idx !== -1)
+				{
+					negative_prompt = lines.splice(idx).join('\n');
+				}
+
+				prompt = lines.join('\n');
+			}
 		}
 
-		let line = lines.pop();
-
-		if (line.startsWith('Steps: '))
-		{
-			infoline = line;
-			line = void 0
-		}
-
-		line ??= lines.pop();
-
-		if (line.startsWith('Negative prompt: '))
-		{
-			negative_prompt = line.slice('Negative prompt: '.length);
-			line = void 0
-		}
-
-		line ??= lines.pop();
-
-		prompt = line;
-
-		if (lines.length)
-		{
-			throw new TypeError()
-		}
+		prompt = prompt.replace(/\x00\x00\x00/g, '');
+		negative_prompt = negative_prompt.replace(/\x00\x00\x00/g, '');
 	}
-	else
-	{
-		let negative_prompt_index = lines.findIndex(a => a.match(/^Negative prompt:/))
-		prompt = lines.splice(0, negative_prompt_index).join('\n').trim()
-		let steps_index = lines.findIndex(a => a.match(/^Steps:/))
-		negative_prompt = lines.splice(0, steps_index).join('\n').slice('Negative prompt:'.length).trim()
-
-		infoline = lines.splice(0, 1)[0];
-
-		infoline_extra = lines;
-	}
-
-	prompt = prompt.replace(/\x00\x00\x00/g, '');
-	negative_prompt = negative_prompt.replace(/\x00\x00\x00/g, '');
 
 	return {
 		prompt,

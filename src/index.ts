@@ -1,15 +1,39 @@
 import { inputToBytes } from './utils';
-import { _parseInfoLine, extractPromptAndInfoFromRaw } from './parser';
+import { _parseInfoLine, _parseLine, extractPromptAndInfoFromRaw } from './parser';
 import { extractRawFromBytes } from './png';
 import { handleInfoEntries } from './handler';
+
+export { _splitRawToLines } from './split';
+export { extractPromptAndInfoFromRaw, _parseInfoLine, _parseLine, handleInfoEntries }
 
 export interface IOptionsInfoparser
 {
   cast_to_snake?: boolean;
+  /**
+   * If true, prompt and negative_prompt are included in the input
+   */
   isIncludePrompts?: boolean;
 }
 
-export function infoparser(line: string, opts?: IOptionsInfoparser)
+/**
+ * Parses raw info line and returns an object with the extracted data.
+ *
+ * @param line - The raw info line to parse.
+ * @param opts - Optional parameters.
+ * @param opts.cast_to_snake - If true, keys will be converted to snake_case. Default is false.
+ * @param opts.isIncludePrompts - If true, prompt and negative_prompt will be included in the result. Default is false.
+ *
+ * @returns An object containing the extracted data.
+ *
+ * @example
+ * ```typescript
+ * const rawInfo = "my prompt, Negative prompt: my negative prompt, width: 512, height: 512";
+ * const parsedData = parseFromRawInfo(rawInfo, { isIncludePrompts: true });
+ * console.log(parsedData);
+ * // Output: { prompt: 'my prompt', Negative prompt: 'my negative prompt', width: 512, height: 512 }
+ * ```
+ */
+export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser)
 {
   let base = [] as ReturnType<typeof handleInfoEntries>
   if (opts?.isIncludePrompts)
@@ -31,14 +55,14 @@ export function infoparser(line: string, opts?: IOptionsInfoparser)
 /**
  * @example
  * import fs from 'fs/promises'
- * import PNGINFO from 'auto1111-pnginfo'
+ * import parseFromImageBuffer from '@bluelovers/auto1111-pnginfo'
  *
  * const file = await fs.readFile('generate_waifu.png')
- * const info = PNGINFO(file)
+ * const info = parseFromImageBuffer(file)
  *
  * console.log(info)
  */
-export function PNGINFO(png: Uint8Array | string, cast_to_snake = false)
+export function parseFromImageBuffer(png: Uint8Array | string, cast_to_snake = false)
 {
   let bytes = inputToBytes(png) as Uint8Array;
 
@@ -59,7 +83,7 @@ export function PNGINFO(png: Uint8Array | string, cast_to_snake = false)
     //lines_raw,
   } = extractPromptAndInfoFromRaw(raw_info as any)
 
-  let data = infoparser(infoline, {
+  let data = parseFromRawInfo(infoline, {
     cast_to_snake
   });
 
@@ -80,15 +104,4 @@ export function PNGINFO(png: Uint8Array | string, cast_to_snake = false)
   return output
 }
 
-// @ts-ignore
-if (process.env.TSDX_FORMAT !== 'esm')
-{
-  Object.defineProperty(PNGINFO, "__esModule", { value: true });
-
-  Object.defineProperty(PNGINFO, 'PNGINFO', { value: PNGINFO });
-  Object.defineProperty(PNGINFO, 'default', { value: PNGINFO });
-
-  Object.defineProperty(PNGINFO, 'infoparser', { value: infoparser });
-}
-
-export default PNGINFO
+export default parseFromImageBuffer

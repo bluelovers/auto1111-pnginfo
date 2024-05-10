@@ -13,10 +13,10 @@
 
 ```js
 import fs from 'fs/promises'
-import PNGINFO from 'auto1111-pnginfo'
+import parseFromImageBuffer from '@bluelovers/auto1111-pnginfo'
 
 const file = await fs.readFile('generate_waifu.png')
-const info = PNGINFO(file)
+const info = parseFromImageBuffer(file)
 
 console.log(info)
 ```

@@ -1,6 +1,6 @@
 {
   "name": "@bluelovers/auto1111-pnginfo",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": " an extreremely minimalistic js library to extract PNG info from auto1111 gens",
   "keywords": [
     "automatic1111",
@@ -100,6 +100,7 @@
     "tsc:showConfig": "ynpx get-current-tsconfig -p"
   },
   "dependencies": {
+    "crlf-normalize": "^1.0.20",
     "split-smartly2": "^2.0.1"
   },
   "devDependencies": {
