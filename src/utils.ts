@@ -36,7 +36,11 @@ export function i32(a: Uint8Array, i: number)
 
 export function _normalizeInputRaw(raw_info: string)
 {
-	raw_info = crlf(raw_info).replace(/[\s\r\n]+$/g, '');
+	raw_info = crlf(raw_info)
+		.replace(/[ \t\xa0]+(?=\n)/g, '')
+		.replace(/\n{3,}/g, '\n\n')
+		.replace(/^[\r\n]+|[\s\r\n]+$/g, '')
+	;
 
 	return raw_info
 }

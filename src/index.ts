@@ -1,10 +1,16 @@
-import { inputToBytes } from './utils';
+import { _normalizeInputRaw, inputToBytes } from './utils';
 import { _parseInfoLine, _parseLine, extractPromptAndInfoFromRaw } from './parser';
 import { extractRawFromBytes } from './png';
 import { handleInfoEntries } from './handler';
 
 export { _splitRawToLines } from './split';
-export { extractPromptAndInfoFromRaw, _parseInfoLine, _parseLine, handleInfoEntries }
+export {
+  extractPromptAndInfoFromRaw,
+  _parseInfoLine,
+  _parseLine,
+  handleInfoEntries,
+  _normalizeInputRaw
+}
 
 export interface IOptionsInfoparser
 {
@@ -13,6 +19,13 @@ export interface IOptionsInfoparser
    * If true, prompt and negative_prompt are included in the input
    */
   isIncludePrompts?: boolean;
+}
+
+export interface IRecordInfo
+{
+  prompt: string;
+  negative_prompt: string;
+  [k: string]: string | number;
 }
 
 /**
@@ -33,7 +46,7 @@ export interface IOptionsInfoparser
  * // Output: { prompt: 'my prompt', Negative prompt: 'my negative prompt', width: 512, height: 512 }
  * ```
  */
-export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser)
+export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser): IRecordInfo
 {
   let base = [] as ReturnType<typeof handleInfoEntries>
   if (opts?.isIncludePrompts)
@@ -49,7 +62,7 @@ export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser)
     line = infoline;
   }
 
-  return Object.fromEntries(base.concat(handleInfoEntries(_parseInfoLine(line), opts)))
+  return Object.fromEntries(base.concat(handleInfoEntries(_parseInfoLine(line), opts))) as IRecordInfo
 }
 
 /**
