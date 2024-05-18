@@ -10,7 +10,7 @@ function _normalizeInputRaw(n) {
   return e(n).replace(/[ \t\xa0]+(?=\n)/g, "").replace(/\n{3,}/g, "\n\n").replace(/^[\r\n]+|[\s\r\n]+$/g, "");
 }
 
-const t = /\r?\n/, r = /\x00\x00\x00\r?\n/;
+const t = /\r?\n/, r = /(?:\x00\x00\x00|\u200b\u200b\u200b)\r?\n/;
 
 function _splitRawToLines(e) {
   return e.split(_isRawVersionPlus(e) ? r : t);
@@ -111,12 +111,12 @@ function parseFromImageBuffer(e, n = !1) {
     };
   }(t);
   if (!r) return;
-  const {raw_info: i, width: a, height: s} = r, {prompt: p, negative_prompt: f, infoline: l, infoline_extra: c} = extractPromptAndInfoFromRaw(i);
+  const {raw_info: i, width: a, height: s} = r, {prompt: p, negative_prompt: f, infoline: l, infoline_extra: u} = extractPromptAndInfoFromRaw(i);
   return {
     metadata: {
       width: a,
       height: s,
-      extra: c,
+      extra: u,
       raw_info: i
     },
     pnginfo: {

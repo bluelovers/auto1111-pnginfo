@@ -14,7 +14,7 @@ function _normalizeInputRaw(r) {
   return e.crlf(r).replace(/[ \t\xa0]+(?=\n)/g, "").replace(/\n{3,}/g, "\n\n").replace(/^[\r\n]+|[\s\r\n]+$/g, "");
 }
 
-const t = /\r?\n/, n = /\x00\x00\x00\r?\n/;
+const t = /\r?\n/, n = /(?:\x00\x00\x00|\u200b\u200b\u200b)\r?\n/;
 
 function _splitRawToLines(e) {
   return e.split(_isRawVersionPlus(e) ? n : t);

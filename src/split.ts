@@ -3,9 +3,12 @@
  */
 export const RE_LINE_SPLIT_BASE = /\r?\n/;
 /**
+ * ```
  * \x00\x00\x00\n
+ * \u200b\u200b\u200b\n zero-width space
+ * ```
  */
-export const RE_LINE_SPLIT_PLUS = /\x00\x00\x00\r?\n/;
+export const RE_LINE_SPLIT_PLUS = /(?:\x00\x00\x00|\u200b\u200b\u200b)\r?\n/;
 
 /**
  * Splits a raw string into an array of lines.
