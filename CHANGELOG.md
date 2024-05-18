@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.3](https://github.com/thot-experiment/pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.2...@bluelovers/auto1111-pnginfo@2.0.3) (2024-05-18)
+
+
+
+### ✨　Features
+
+* support `\u200b\u200b\u200b\n` zero-width space ([32508aa](https://github.com/thot-experiment/pnginfo/commit/32508aa761ba240c27c0affe6f7ab966e173f376))
+
+
+
 ## [2.0.2](https://github.com/thot-experiment/pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.1...@bluelovers/auto1111-pnginfo@2.0.2) (2024-05-10)
 
 
