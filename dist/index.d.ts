@@ -1,4 +1,29 @@
-export declare function _normalizeInputRaw(raw_info: string): string;
+export declare const enum EnumInfoKey {
+	prompt = "prompt",
+	negative_prompt = "negative_prompt"
+}
+export declare function keyToSnakeStyle1(key: string): string;
+export declare function handleInfoEntries(entries: Iterable<readonly [
+	string,
+	string
+]>, opts?: IOptionsInfoparser): (readonly [
+	string,
+	string | number
+])[];
+export declare function handleInfoEntriesGenerator(entries: Iterable<readonly [
+	string,
+	string
+]>, opts?: IOptionsInfoparser): Generator<readonly [
+	string,
+	string | number
+], void, unknown>;
+export declare function handleInfoEntry(entry: readonly [
+	string,
+	string
+], opts?: IOptionsInfoparser): readonly [
+	string,
+	string | number
+];
 /**
  * `${key}: ${value}`
  */
@@ -28,6 +53,10 @@ export declare function _parseInfoLine(infoline: string): (readonly [
 	string,
 	string
 ])[];
+export declare function _parseInfoLineGenerator(infoline: string): Generator<readonly [
+	string,
+	string
+], void, unknown>;
 /**
  * Extracts prompt, negative prompt, info line, and extra info from a raw info string.
  *
@@ -65,13 +94,37 @@ export declare function extractPromptAndInfoFromRaw(raw_info: string): {
 	infoline_extra: string[];
 	lines_raw: string[];
 };
-export declare function handleInfoEntries(entries: readonly (readonly [
-	string,
-	string
-])[], opts?: IOptionsInfoparser): (readonly [
-	string,
-	string | number
-])[];
+export declare function uint8arrayToString(uint8array: Uint8Array): string;
+/**
+ * ```
+ * new TextEncoder().encode(inputString)
+ * String.fromCharCode(...raw_info)
+ * ```
+ */
+export declare function stringToUint8Array(inputString: string): Uint8Array;
+/**
+ * Extracts raw data from a PNG byte array.
+ *
+ * @param bytes - The Uint8Array containing the PNG data.
+ * @returns An object containing the width, height, and raw_info extracted from the PNG data,
+ *          or `undefined` if the PNG data does not contain a valid tEXt chunk.
+ */
+export declare function extractRawFromBytes(bytes: Uint8Array): {
+	width: number;
+	height: number;
+	raw_info: string;
+};
+/**
+ * \n
+ */
+export declare const RE_LINE_SPLIT_BASE: RegExp;
+/**
+ * ```
+ * \x00\x00\x00\n
+ * \u200b\u200b\u200b\n zero-width space
+ * ```
+ */
+export declare const RE_LINE_SPLIT_PLUS: RegExp;
 /**
  * Splits a raw string into an array of lines.
  *
@@ -86,6 +139,28 @@ export declare function handleInfoEntries(entries: readonly (readonly [
  * ```
  */
 export declare function _splitRawToLines(raw_info: string): string[];
+/**
+ * Checks if the given raw string is in "\x00\x00\x00\n" format.
+ *
+ * @see https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/15713
+ *
+ * @param raw_info - The raw string to check.
+ * @returns A boolean indicating whether the raw string is in "\x00\x00\x00\n" format.
+ *
+ * @example
+ * ```typescript
+ * const rawInfo = "line1\nline2\x00\x00\x00\r\nline3";
+ * const isPlusFormat = _isRawVersionPlus(rawInfo);
+ * console.log(isPlusFormat); // Output: true
+ * ```
+ */
+export declare function _isRawVersionPlus(raw_info: string): boolean;
+export declare function inputToBytes(png: Uint8Array | string): Uint8Array | Buffer;
+/**
+ * get int32 from png compensating for endianness
+ */
+export declare function i32(a: Uint8Array, i: number): number;
+export declare function _normalizeInputRaw(raw_info: string): string;
 export interface IOptionsInfoparser {
 	cast_to_snake?: boolean;
 	/**
@@ -94,8 +169,8 @@ export interface IOptionsInfoparser {
 	isIncludePrompts?: boolean;
 }
 export interface IRecordInfo {
-	prompt: string;
-	negative_prompt: string;
+	[EnumInfoKey.prompt]: string;
+	[EnumInfoKey.negative_prompt]: string;
 	[k: string]: string | number;
 }
 /**
@@ -117,6 +192,13 @@ export interface IRecordInfo {
  * ```
  */
 export declare function parseFromRawInfo(line: string, opts?: IOptionsInfoparser): IRecordInfo;
+export declare function parseFromRawInfoGenerator(line: string, opts?: IOptionsInfoparser): Generator<readonly [
+	string,
+	string | number
+] | readonly [
+	EnumInfoKey,
+	string
+], void, void>;
 /**
  * @example
  * import fs from 'fs/promises'

@@ -6,6 +6,10 @@ Object.defineProperty(exports, "__esModule", {
 
 var e = require("crlf-normalize"), r = require("split-smartly2");
 
+function inputToBytes(e) {
+  return "undefined" != typeof Buffer && Buffer.isBuffer(e) || e instanceof Uint8Array ? e : Uint8Array.from(atob(e.slice(0, 8192)), (e => e.charCodeAt(0)));
+}
+
 function i32(e, r) {
   return new Uint32Array(new Uint8Array([ ...e.slice(r, r + 4) ].reverse()).buffer)[0];
 }
@@ -14,61 +18,60 @@ function _normalizeInputRaw(r) {
   return e.crlf(r).replace(/[ \t\xa0]+(?=\n)/g, "").replace(/\n{3,}/g, "\n\n").replace(/^[\r\n]+|[\s\r\n]+$/g, "");
 }
 
-const t = /\r?\n/, n = /(?:\x00\x00\x00|\u200b\u200b\u200b)\r?\n/;
+const n = /\r?\n/, t = /(?:\x00\x00\x00|\u200b\u200b\u200b)\r?\n/;
 
 function _splitRawToLines(e) {
-  return e.split(_isRawVersionPlus(e) ? n : t);
+  return e.split(_isRawVersionPlus(e) ? t : n);
 }
 
 function _isRawVersionPlus(e) {
-  return n.test(e);
+  return t.test(e);
 }
 
 function _parseLine(e) {
-  const [, r, t] = e.match(/^([^:]+)\s*:\s*(.*)$/);
-  return [ r, t ];
+  const [, r, n] = e.match(/^([^:]+)\s*:\s*(.*)$/);
+  return [ r, n ];
 }
 
-function _parseInfoLine(e) {
-  return e = _normalizeInputRaw(e), r.splitSmartly(e, [ "," ], {
+function* _parseInfoLineGenerator(e) {
+  e = _normalizeInputRaw(e);
+  const n = r.splitSmartly(e, [ "," ], {
     brackets: !0,
     trimSeparators: !0
-  }).reduce(((e, r) => {
-    if (null != r && r.length) {
-      const t = _parseLine(r);
-      e.push(t);
-    }
-    return e;
-  }), []);
+  });
+  for (let e of n) if (null != e && e.length) {
+    const r = _parseLine(e);
+    yield r;
+  }
 }
 
 function extractPromptAndInfoFromRaw(e) {
   const r = _isRawVersionPlus(e = _normalizeInputRaw(e));
-  let t = _splitRawToLines(e), n = "", o = "", i = "";
-  const a = t.slice();
-  if (t.length) {
+  let n = _splitRawToLines(e), t = "", o = "", i = "";
+  const a = n.slice();
+  if (n.length) {
     if (r) {
       var s, p;
-      if (t.length > 3) throw new TypeError;
-      let e = t.pop();
-      if (e.startsWith("Steps: ") && (i = e, e = void 0), null !== (s = e) && void 0 !== s || (e = t.pop()), 
-      e.startsWith("Negative prompt: ") && (o = e.slice(17), e = void 0), null !== (p = e) && void 0 !== p || (e = t.pop()), 
-      n = e, t.length) throw new TypeError;
+      if (n.length > 3) throw new TypeError;
+      let e = n.pop();
+      if (e.startsWith("Steps: ") && (i = e, e = void 0), null !== (s = e) && void 0 !== s || (e = n.pop()), 
+      e.startsWith("Negative prompt: ") && (o = e.slice(17), e = void 0), null !== (p = e) && void 0 !== p || (e = n.pop()), 
+      t = e, n.length) throw new TypeError;
     } else {
-      let e = t[t.length - 1];
-      if (e.startsWith("Steps: ") && (i = t.pop(), e = void 0), t.length) {
+      let e = n[n.length - 1];
+      if (e.startsWith("Steps: ") && (i = n.pop(), e = void 0), n.length) {
         let r = -1;
-        for (let n = t.length - 1; n >= 0; n--) if (e = t[n], e.startsWith("Negative prompt: ")) {
-          r = n, t[n] = e.slice(17);
+        for (let t = n.length - 1; t >= 0; t--) if (e = n[t], e.startsWith("Negative prompt: ")) {
+          r = t, n[t] = e.slice(17);
           break;
         }
-        -1 !== r && (o = t.splice(r).join("\n")), n = t.join("\n");
+        -1 !== r && (o = n.splice(r).join("\n")), t = n.join("\n");
       }
     }
-    n = n.replace(/\x00\x00\x00/g, ""), o = o.replace(/\x00\x00\x00/g, "");
+    t = t.replace(/\x00\x00\x00/g, ""), o = o.replace(/\x00\x00\x00/g, "");
   }
   return {
-    prompt: n,
+    prompt: t,
     negative_prompt: o,
     infoline: i,
     infoline_extra: [],
@@ -76,65 +79,88 @@ function extractPromptAndInfoFromRaw(e) {
   };
 }
 
-const o = /*#__PURE__*/ Uint8Array.from("tEXt", (e => e.charCodeAt(0))).join(",");
+const o = "137,80,78,71,13,10,26,10", i = /*#__PURE__*/ Uint8Array.from("tEXt", (e => e.charCodeAt(0))).join(","), a = 11;
 
-function handleInfoEntries(e, r) {
-  const t = null == r ? void 0 : r.cast_to_snake, n = /^0\d/;
-  return e.map((([e, r]) => {
-    const o = parseFloat(r), i = n.test(r) || isNaN(o) || r - o != 0;
-    return t && (e = function keyToSnakeStyle1(e) {
-      return e.toLowerCase().replace(/ /g, "_");
-    }(e)), [ e, i ? r : o ];
-  }));
+function uint8arrayToString(e) {
+  return (new TextDecoder).decode(e);
 }
 
+function extractRawFromBytes(e) {
+  if (e.slice(0, 8).join(",") !== o) return;
+  const [r, n, t] = [ i32(e, 8), i32(e, 16), i32(e, 20) ], s = 8 + r + 12;
+  if (e.slice(s + 4, s + 8).join(",") !== i) return;
+  const p = i32(e, s);
+  return {
+    width: n,
+    height: t,
+    raw_info: uint8arrayToString(e.slice(s + 8 + a, s + 8 + p))
+  };
+}
+
+function keyToSnakeStyle1(e) {
+  return e.toLowerCase().replace(/ /g, "_");
+}
+
+function* handleInfoEntriesGenerator(e, r) {
+  for (const n of e) yield handleInfoEntry(n, r);
+}
+
+function handleInfoEntry(e, r) {
+  const n = null == r ? void 0 : r.cast_to_snake;
+  let [t, o] = e;
+  const i = parseFloat(o), a = /^0\d/.test(o) || isNaN(i) || o - i != 0;
+  return n && (t = keyToSnakeStyle1(t)), [ t, a ? o : i ];
+}
+
+var s;
+
 function parseFromRawInfo(e, r) {
-  let t = [];
+  return Object.fromEntries([ ...parseFromRawInfoGenerator(e, r) ]);
+}
+
+function* parseFromRawInfoGenerator(e, r) {
   if (null != r && r.isIncludePrompts) {
-    const {prompt: r, negative_prompt: n, infoline: o} = extractPromptAndInfoFromRaw(e);
-    t.push([ "prompt", r ]), t.push([ "negative_prompt", n ]), e = o;
+    const {prompt: r, negative_prompt: n, infoline: t} = extractPromptAndInfoFromRaw(e);
+    yield [ "prompt", r ], yield [ "negative_prompt", n ], e = t;
   }
-  return Object.fromEntries(t.concat(handleInfoEntries(_parseInfoLine(e), r)));
+  yield* handleInfoEntriesGenerator(_parseInfoLineGenerator(e), r);
 }
 
 function parseFromImageBuffer(e, r = !1) {
-  let t = function inputToBytes(e) {
-    return "undefined" != typeof Buffer && Buffer.isBuffer(e) || e instanceof Uint8Array ? e : Uint8Array.from(atob(e.slice(0, 8192)), (e => e.charCodeAt(0)));
-  }(e);
-  const n = function extractRawFromBytes(e) {
-    if ("137,80,78,71,13,10,26,10" !== e.slice(0, 8).join(",")) return;
-    const [r, t, n] = [ i32(e, 8), i32(e, 16), i32(e, 20) ], i = 8 + r + 12;
-    if (e.slice(i + 4, i + 8).join(",") !== o) return;
-    const a = i32(e, i);
-    return {
-      width: t,
-      height: n,
-      raw_info: function uint8arrayToString(e) {
-        return (new TextDecoder).decode(e);
-      }(e.slice(i + 8 + 11, i + 8 + a))
-    };
-  }(t);
+  const n = extractRawFromBytes(inputToBytes(e));
   if (!n) return;
-  const {raw_info: i, width: a, height: s} = n, {prompt: p, negative_prompt: f, infoline: l, infoline_extra: u} = extractPromptAndInfoFromRaw(i);
+  const {raw_info: t, width: o, height: i} = n, {prompt: a, negative_prompt: s, infoline: p, infoline_extra: f} = extractPromptAndInfoFromRaw(t);
   return {
     metadata: {
-      width: a,
-      height: s,
-      extra: u,
-      raw_info: i
+      width: o,
+      height: i,
+      extra: f,
+      raw_info: t
     },
     pnginfo: {
-      prompt: p,
-      negative_prompt: f,
-      ...parseFromRawInfo(l, {
+      prompt: a,
+      negative_prompt: s,
+      ...parseFromRawInfo(p, {
         cast_to_snake: r
       })
     }
   };
 }
 
-exports._normalizeInputRaw = _normalizeInputRaw, exports._parseInfoLine = _parseInfoLine, 
-exports._parseLine = _parseLine, exports._splitRawToLines = _splitRawToLines, exports.default = parseFromImageBuffer, 
-exports.extractPromptAndInfoFromRaw = extractPromptAndInfoFromRaw, exports.handleInfoEntries = handleInfoEntries, 
-exports.parseFromImageBuffer = parseFromImageBuffer, exports.parseFromRawInfo = parseFromRawInfo;
+exports.EnumInfoKey = void 0, (s = exports.EnumInfoKey || (exports.EnumInfoKey = {})).prompt = "prompt", 
+s.negative_prompt = "negative_prompt", exports.RE_LINE_SPLIT_BASE = n, exports.RE_LINE_SPLIT_PLUS = t, 
+exports._isRawVersionPlus = _isRawVersionPlus, exports._normalizeInputRaw = _normalizeInputRaw, 
+exports._parseInfoLine = function _parseInfoLine(e) {
+  return [ ..._parseInfoLineGenerator(e) ];
+}, exports._parseInfoLineGenerator = _parseInfoLineGenerator, exports._parseLine = _parseLine, 
+exports._splitRawToLines = _splitRawToLines, exports.default = parseFromImageBuffer, 
+exports.extractPromptAndInfoFromRaw = extractPromptAndInfoFromRaw, exports.extractRawFromBytes = extractRawFromBytes, 
+exports.handleInfoEntries = function handleInfoEntries(e, r) {
+  return [ ...handleInfoEntriesGenerator(e, r) ];
+}, exports.handleInfoEntriesGenerator = handleInfoEntriesGenerator, exports.handleInfoEntry = handleInfoEntry, 
+exports.i32 = i32, exports.inputToBytes = inputToBytes, exports.keyToSnakeStyle1 = keyToSnakeStyle1, 
+exports.parseFromImageBuffer = parseFromImageBuffer, exports.parseFromRawInfo = parseFromRawInfo, 
+exports.parseFromRawInfoGenerator = parseFromRawInfoGenerator, exports.stringToUint8Array = function stringToUint8Array(e) {
+  return (new TextEncoder).encode(e);
+}, exports.uint8arrayToString = uint8arrayToString;
 //# sourceMappingURL=index.cjs.production.min.cjs.map

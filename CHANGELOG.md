@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.4](https://github.com/thot-experiment/pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.3...@bluelovers/auto1111-pnginfo@2.0.4) (2024-06-11)
+
+
+
+### 📦　Code Refactoring
+
+* code splitting and add `Generator` fn ([1397b29](https://github.com/thot-experiment/pnginfo/commit/1397b299f12fa707b71145d8df78e9ab6a7f9df4))
+
+
+
 ## [2.0.3](https://github.com/thot-experiment/pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.2...@bluelovers/auto1111-pnginfo@2.0.3) (2024-05-18)
 
 

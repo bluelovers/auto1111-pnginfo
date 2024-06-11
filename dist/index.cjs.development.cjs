@@ -79,18 +79,21 @@ function _parseLine(line) {
  * ```
  */
 function _parseInfoLine(infoline) {
+  return [..._parseInfoLineGenerator(infoline)];
+}
+function* _parseInfoLineGenerator(infoline) {
   infoline = _normalizeInputRaw(infoline);
   const entries = splitSmartly2.splitSmartly(infoline, [','], {
     brackets: true,
     trimSeparators: true
   });
-  return entries.reduce((entries, line) => {
+  for (let line of entries) {
     if (line !== null && line !== void 0 && line.length) {
       const entry = _parseLine(line);
-      entries.push(entry);
+      yield entry;
     }
-    return entries;
-  }, []);
+  }
+  return void 0;
 }
 /**
  * Extracts prompt, negative prompt, info line, and extra info from a raw info string.
@@ -192,6 +195,9 @@ const OFFSET_parameters = "parameters\u0000".length;
 function uint8arrayToString(uint8array) {
   return new TextDecoder().decode(uint8array);
 }
+function stringToUint8Array(inputString) {
+  return new TextEncoder().encode(inputString);
+}
 /**
  * Extracts raw data from a PNG byte array.
  *
@@ -219,16 +225,29 @@ function keyToSnakeStyle1(key) {
   return key.toLowerCase().replace(/ /g, '_');
 }
 function handleInfoEntries(entries, opts) {
+  return [...handleInfoEntriesGenerator(entries, opts)];
+}
+function* handleInfoEntriesGenerator(entries, opts) {
+  for (const entry of entries) {
+    yield handleInfoEntry(entry, opts);
+  }
+}
+function handleInfoEntry(entry, opts) {
   const cast_to_snake = opts === null || opts === void 0 ? void 0 : opts.cast_to_snake;
   const re = /^0\d/;
-  return entries.map(([key, value]) => {
-    const asNum = parseFloat(value);
-    const isNotNum = re.test(value) || isNaN(asNum) || value - asNum !== 0;
-    if (cast_to_snake) key = keyToSnakeStyle1(key);
-    const out = [key, isNotNum ? value : asNum];
-    return out;
-  });
+  let [key, value] = entry;
+  const asNum = parseFloat(value);
+  const isNotNum = re.test(value) || isNaN(asNum) || value - asNum !== 0;
+  if (cast_to_snake) key = keyToSnakeStyle1(key);
+  const out = [key, isNotNum ? value : asNum];
+  return out;
 }
+
+exports.EnumInfoKey = void 0;
+(function (EnumInfoKey) {
+  EnumInfoKey["prompt"] = "prompt";
+  EnumInfoKey["negative_prompt"] = "negative_prompt";
+})(exports.EnumInfoKey || (exports.EnumInfoKey = {}));
 
 /**
  * Parses raw info line and returns an object with the extracted data.
@@ -249,18 +268,20 @@ function handleInfoEntries(entries, opts) {
  * ```
  */
 function parseFromRawInfo(line, opts) {
-  let base = [];
+  return Object.fromEntries([...parseFromRawInfoGenerator(line, opts)]);
+}
+function* parseFromRawInfoGenerator(line, opts) {
   if (opts !== null && opts !== void 0 && opts.isIncludePrompts) {
     const {
       prompt,
       negative_prompt,
       infoline
     } = extractPromptAndInfoFromRaw(line);
-    base.push(['prompt', prompt]);
-    base.push(['negative_prompt', negative_prompt]);
+    yield ["prompt" /* EnumInfoKey.prompt */, prompt];
+    yield ["negative_prompt" /* EnumInfoKey.negative_prompt */, negative_prompt];
     line = infoline;
   }
-  return Object.fromEntries(base.concat(handleInfoEntries(_parseInfoLine(line), opts)));
+  yield* handleInfoEntriesGenerator(_parseInfoLineGenerator(line), opts);
 }
 /**
  * @example
@@ -306,13 +327,26 @@ function parseFromImageBuffer(png, cast_to_snake = false) {
   return output;
 }
 
+exports.RE_LINE_SPLIT_BASE = RE_LINE_SPLIT_BASE;
+exports.RE_LINE_SPLIT_PLUS = RE_LINE_SPLIT_PLUS;
+exports._isRawVersionPlus = _isRawVersionPlus;
 exports._normalizeInputRaw = _normalizeInputRaw;
 exports._parseInfoLine = _parseInfoLine;
+exports._parseInfoLineGenerator = _parseInfoLineGenerator;
 exports._parseLine = _parseLine;
 exports._splitRawToLines = _splitRawToLines;
 exports.default = parseFromImageBuffer;
 exports.extractPromptAndInfoFromRaw = extractPromptAndInfoFromRaw;
+exports.extractRawFromBytes = extractRawFromBytes;
 exports.handleInfoEntries = handleInfoEntries;
+exports.handleInfoEntriesGenerator = handleInfoEntriesGenerator;
+exports.handleInfoEntry = handleInfoEntry;
+exports.i32 = i32;
+exports.inputToBytes = inputToBytes;
+exports.keyToSnakeStyle1 = keyToSnakeStyle1;
 exports.parseFromImageBuffer = parseFromImageBuffer;
 exports.parseFromRawInfo = parseFromRawInfo;
+exports.parseFromRawInfoGenerator = parseFromRawInfoGenerator;
+exports.stringToUint8Array = stringToUint8Array;
+exports.uint8arrayToString = uint8arrayToString;
 //# sourceMappingURL=index.cjs.development.cjs.map
