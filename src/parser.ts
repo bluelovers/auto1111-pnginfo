@@ -31,6 +31,11 @@ export function _parseLine(line: string)
  */
 export function _parseInfoLine(infoline: string)
 {
+	return [..._parseInfoLineGenerator(infoline)]
+}
+
+export function* _parseInfoLineGenerator(infoline: string)
+{
 	infoline = _normalizeInputRaw(infoline);
 
 	const entries = splitSmartly(infoline, [','], {
@@ -38,18 +43,21 @@ export function _parseInfoLine(infoline: string)
 		trimSeparators: true,
 	}) as string[];
 
-	return entries.reduce((entries, line) => {
+	//let list: (readonly [string, string])[] = [];
+
+	for (let line of entries)
+	{
 		/**
 		 * avoid empty line
 		 */
 		if (line?.length)
 		{
 			const entry = _parseLine(line);
-			entries.push(entry)
+			yield entry
 		}
+	}
 
-		return entries
-	}, [] as (readonly [string, string])[])
+	return void 0 as void
 }
 
 /**

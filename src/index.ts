@@ -1,31 +1,31 @@
-import { _normalizeInputRaw, inputToBytes } from './utils';
-import { _parseInfoLine, _parseLine, extractPromptAndInfoFromRaw } from './parser';
+import { inputToBytes } from './utils';
+import { _parseInfoLineGenerator, extractPromptAndInfoFromRaw } from './parser';
 import { extractRawFromBytes } from './png';
-import { handleInfoEntries } from './handler';
+import { handleInfoEntriesGenerator } from './handler';
+import { EnumInfoKey } from './types';
 
-export { _splitRawToLines } from './split';
-export {
-  extractPromptAndInfoFromRaw,
-  _parseInfoLine,
-  _parseLine,
-  handleInfoEntries,
-  _normalizeInputRaw
-}
+export * from './handler';
+export * from './parser';
+export * from './png';
+export * from './split';
+export * from './types';
+export * from './utils';
 
 export interface IOptionsInfoparser
 {
-  cast_to_snake?: boolean;
-  /**
-   * If true, prompt and negative_prompt are included in the input
-   */
-  isIncludePrompts?: boolean;
+	cast_to_snake?: boolean;
+	/**
+	 * If true, prompt and negative_prompt are included in the input
+	 */
+	isIncludePrompts?: boolean;
 }
 
 export interface IRecordInfo
 {
-  prompt: string;
-  negative_prompt: string;
-  [k: string]: string | number;
+	[EnumInfoKey.prompt]: string;
+	[EnumInfoKey.negative_prompt]: string;
+
+	[k: string]: string | number;
 }
 
 /**
@@ -46,23 +46,27 @@ export interface IRecordInfo
  * // Output: { prompt: 'my prompt', Negative prompt: 'my negative prompt', width: 512, height: 512 }
  * ```
  */
-export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser): IRecordInfo
+export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser)
 {
-  let base = [] as ReturnType<typeof handleInfoEntries>
-  if (opts?.isIncludePrompts)
-  {
-    const {
-      prompt,
-      negative_prompt,
-      infoline,
-    } = extractPromptAndInfoFromRaw(line);
+	return Object.fromEntries([...parseFromRawInfoGenerator(line, opts)]) as IRecordInfo
+}
 
-    base.push(['prompt', prompt]);
-    base.push(['negative_prompt', negative_prompt]);
-    line = infoline;
-  }
+export function* parseFromRawInfoGenerator(line: string, opts?: IOptionsInfoparser): Generator<readonly [string, string | number] | readonly [EnumInfoKey, string], void, void>
+{
+	if (opts?.isIncludePrompts)
+	{
+		const {
+			prompt,
+			negative_prompt,
+			infoline,
+		} = extractPromptAndInfoFromRaw(line);
 
-  return Object.fromEntries(base.concat(handleInfoEntries(_parseInfoLine(line), opts))) as IRecordInfo
+		yield [EnumInfoKey.prompt as const, prompt] as const
+		yield [EnumInfoKey.negative_prompt as const, negative_prompt] as const;
+		line = infoline;
+	}
+
+	yield* handleInfoEntriesGenerator(_parseInfoLineGenerator(line), opts)
 }
 
 /**
@@ -77,44 +81,44 @@ export function parseFromRawInfo(line: string, opts?: IOptionsInfoparser): IReco
  */
 export function parseFromImageBuffer(png: Uint8Array | string, cast_to_snake = false)
 {
-  let bytes = inputToBytes(png) as Uint8Array;
+	let bytes = inputToBytes(png) as Uint8Array;
 
-  const raw = extractRawFromBytes(bytes);
-  if (!raw) return;
+	const raw = extractRawFromBytes(bytes);
+	if (!raw) return;
 
-  const {
-    raw_info,
-    width,
-    height
-  } = raw;
+	const {
+		raw_info,
+		width,
+		height,
+	} = raw;
 
-  const {
-    prompt,
-    negative_prompt,
-    infoline,
-    infoline_extra,
-    //lines_raw,
-  } = extractPromptAndInfoFromRaw(raw_info as any)
+	const {
+		prompt,
+		negative_prompt,
+		infoline,
+		infoline_extra,
+		//lines_raw,
+	} = extractPromptAndInfoFromRaw(raw_info as any)
 
-  let data = parseFromRawInfo(infoline, {
-    cast_to_snake
-  });
+	let data = parseFromRawInfo(infoline, {
+		cast_to_snake,
+	});
 
-  let output = {
-    metadata: {
-      width,
-      height,
-      extra: infoline_extra,
-      raw_info
-    },
-    pnginfo: {
-      prompt,
-      negative_prompt,
-      ...data,
-    },
-  }
+	let output = {
+		metadata: {
+			width,
+			height,
+			extra: infoline_extra,
+			raw_info,
+		},
+		pnginfo: {
+			prompt,
+			negative_prompt,
+			...data,
+		},
+	}
 
-  return output
+	return output
 }
 
 export default parseFromImageBuffer
