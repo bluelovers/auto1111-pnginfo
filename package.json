@@ -1,6 +1,6 @@
 {
   "name": "@bluelovers/auto1111-pnginfo",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": " an extreremely minimalistic js library to extract PNG info from auto1111 gens",
   "keywords": [
     "automatic1111",
@@ -20,13 +20,13 @@
     "create-by-yarn-tool",
     "create-by-tsdx"
   ],
-  "homepage": "https://github.com/thot-experiment/pnginfo#readme",
+  "homepage": "https://github.com/bluelovers/auto1111-pnginfo#readme",
   "bugs": {
-    "url": "https://github.com/thot-experiment/pnginfo/issues"
+    "url": "https://github.com/bluelovers/auto1111-pnginfo/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thot-experiment/pnginfo.git"
+    "url": "git+https://github.com/bluelovers/auto1111-pnginfo.git"
   },
   "license": "MIT",
   "author": "thot-experiment",
