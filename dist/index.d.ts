@@ -2,6 +2,7 @@ export declare const enum EnumInfoKey {
 	prompt = "prompt",
 	negative_prompt = "negative_prompt"
 }
+export type IBuffer = Uint8Array | Buffer;
 export declare function keyToSnakeStyle1(key: string): string;
 export declare function handleInfoEntries(entries: Iterable<readonly [
 	string,
@@ -101,7 +102,7 @@ export declare function uint8arrayToString(uint8array: Uint8Array): string;
  * String.fromCharCode(...raw_info)
  * ```
  */
-export declare function stringToUint8Array(inputString: string): Uint8Array;
+export declare function stringToUint8Array(inputString: string): Uint8Array<ArrayBuffer>;
 /**
  * Extracts raw data from a PNG byte array.
  *
@@ -155,12 +156,13 @@ export declare function _splitRawToLines(raw_info: string): string[];
  * ```
  */
 export declare function _isRawVersionPlus(raw_info: string): boolean;
-export declare function inputToBytes(png: Uint8Array | string): Uint8Array | Buffer;
+export declare function inputToBytes(png: IBuffer | string): IBuffer;
 /**
  * get int32 from png compensating for endianness
  */
-export declare function i32(a: Uint8Array, i: number): number;
+export declare function i32(a: IBuffer, i: number): number;
 export declare function _normalizeInputRaw(raw_info: string): string;
+export declare function _isInfoLine(line: string): boolean;
 export interface IOptionsInfoparser {
 	cast_to_snake?: boolean;
 	/**
@@ -209,7 +211,7 @@ export declare function parseFromRawInfoGenerator(line: string, opts?: IOptionsI
  *
  * console.log(info)
  */
-export declare function parseFromImageBuffer(png: Uint8Array | string, cast_to_snake?: boolean): {
+export declare function parseFromImageBuffer(png: IBuffer | string, cast_to_snake?: boolean): {
 	metadata: {
 		width: number;
 		height: number;

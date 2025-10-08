@@ -18,6 +18,9 @@ function _normalizeInputRaw(raw_info) {
   raw_info = crlfNormalize.crlf(raw_info).replace(/[ \t\xa0]+(?=\n)/g, '').replace(/\n{3,}/g, '\n\n').replace(/^[\r\n]+|[\s\r\n]+$/g, '');
   return raw_info;
 }
+function _isInfoLine(line) {
+  return line.startsWith('Steps: ');
+}
 
 const RE_LINE_SPLIT_BASE = /\r?\n/;
 const RE_LINE_SPLIT_PLUS = /(?:\x00\x00\x00|\u200b\u200b\u200b)\r?\n/;
@@ -137,11 +140,20 @@ function extractPromptAndInfoFromRaw(raw_info) {
   if (lines.length) {
     if (isPlus) {
       var _line, _line2;
-      if (lines.length > 3) {
+      const line_len = lines.length;
+      if (line_len > 3) {
         throw new TypeError();
       }
       let line = lines.pop();
-      if (line.startsWith('Steps: ')) {
+      if (line_len === 2) {
+        let _ls = line.split('\n');
+        if (_ls.length > 1 && _isInfoLine(_ls[_ls.length - 1])) {
+          line = _ls.pop();
+          lines.push(_ls.join('\n'));
+        }
+        console.dir(line.split('\n'));
+      }
+      if (_isInfoLine(line)) {
         infoline = line;
         line = void 0;
       }
@@ -329,6 +341,7 @@ function parseFromImageBuffer(png, cast_to_snake = false) {
 
 exports.RE_LINE_SPLIT_BASE = RE_LINE_SPLIT_BASE;
 exports.RE_LINE_SPLIT_PLUS = RE_LINE_SPLIT_PLUS;
+exports._isInfoLine = _isInfoLine;
 exports._isRawVersionPlus = _isRawVersionPlus;
 exports._normalizeInputRaw = _normalizeInputRaw;
 exports._parseInfoLine = _parseInfoLine;
