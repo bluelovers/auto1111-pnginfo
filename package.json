@@ -105,8 +105,11 @@
   },
   "devDependencies": {
     "@bluelovers/tsconfig": "^1.0.35",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.12.12"
+    "@types/fs-extra": "^11.0.4",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.7.0",
+    "fs-extra": "^11.3.2",
+    "jest-file-snapshot2": "^0.5.15"
   },
   "packageManager": "yarn@1.22.19",
   "publishConfig": {

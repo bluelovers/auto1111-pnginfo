@@ -1,6 +1,7 @@
 import { crlf } from 'crlf-normalize';
+import { IBuffer } from './types';
 
-export function inputToBytes(png: Uint8Array | string)
+export function inputToBytes(png: IBuffer | string)
 {
 	/**
 	 * if (typeof Buffer !== 'undefined' && Buffer.isBuffer(png))
@@ -29,7 +30,7 @@ export function inputToBytes(png: Uint8Array | string)
 /**
  * get int32 from png compensating for endianness
  */
-export function i32(a: Uint8Array, i: number)
+export function i32(a: IBuffer, i: number)
 {
 	return new Uint32Array(new Uint8Array([...a.slice(i, i + 4)].reverse()).buffer)[0];
 }
@@ -43,4 +44,9 @@ export function _normalizeInputRaw(raw_info: string)
 	;
 
 	return raw_info
+}
+
+export function _isInfoLine(line: string)
+{
+	return line.startsWith('Steps: ')
 }

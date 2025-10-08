@@ -1,6 +1,6 @@
 import { splitSmartly } from 'split-smartly2';
 import { _isRawVersionPlus, _splitRawToLines } from './split';
-import { _normalizeInputRaw } from './utils';
+import { _isInfoLine, _normalizeInputRaw } from './utils';
 
 /**
  * `${key}: ${value}`
@@ -108,14 +108,28 @@ export function extractPromptAndInfoFromRaw(raw_info: string)
 	{
 		if (isPlus)
 		{
-			if (lines.length > 3)
+			const line_len = lines.length;
+
+			if (line_len > 3)
 			{
 				throw new TypeError()
 			}
 
 			let line = lines.pop();
 
-			if (line.startsWith('Steps: '))
+			if (line_len === 2)
+			{
+				let _ls = line.split('\n');
+
+				if (_ls.length > 1 && _isInfoLine(_ls[_ls.length - 1]))
+				{
+					line = _ls.pop();
+					lines.push(_ls.join('\n'));
+				}
+				console.dir(line.split('\n'))
+			}
+
+			if (_isInfoLine(line))
 			{
 				infoline = line;
 				line = void 0

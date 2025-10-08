@@ -2,7 +2,7 @@ import { inputToBytes } from './utils';
 import { _parseInfoLineGenerator, extractPromptAndInfoFromRaw } from './parser';
 import { extractRawFromBytes } from './png';
 import { handleInfoEntriesGenerator } from './handler';
-import { EnumInfoKey } from './types';
+import { EnumInfoKey, IBuffer } from './types';
 
 export * from './handler';
 export * from './parser';
@@ -79,7 +79,7 @@ export function* parseFromRawInfoGenerator(line: string, opts?: IOptionsInfopars
  *
  * console.log(info)
  */
-export function parseFromImageBuffer(png: Uint8Array | string, cast_to_snake = false)
+export function parseFromImageBuffer(png: IBuffer | string, cast_to_snake = false)
 {
 	let bytes = inputToBytes(png) as Uint8Array;
 

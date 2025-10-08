@@ -24,13 +24,13 @@ describe(basename(__filename, extname(__filename)), () =>
 
 	test(`PNGINFO`, async () =>
 	{
-		expect(parseFromImageBuffer(buf)).toMatchSnapshot();
+		expect(parseFromImageBuffer(buf as any)).toMatchSnapshot();
 
 	});
 
 	test(`PNGINFO:cast_to_snake`, async () =>
 	{
-		expect(parseFromImageBuffer(buf, true)).toMatchSnapshot();
+		expect(parseFromImageBuffer(buf as any, true)).toMatchSnapshot();
 	});
 
 })
