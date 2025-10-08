@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.6](https://github.com/bluelovers/auto1111-pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.5...@bluelovers/auto1111-pnginfo@2.0.6) (2025-10-08)
+
+
+
+### 🐛　Bug Fixes
+
+* add support for Buffer type and improve info line parsing ([103749a](https://github.com/bluelovers/auto1111-pnginfo/commit/103749a313a90b9b9e81c0211579e485bd826001))
+
+
+### ✨　Features
+
+* **pnginfo:** 添加_isInfoLine函数并优化信息行处理逻辑 ([dd47569](https://github.com/bluelovers/auto1111-pnginfo/commit/dd47569b08f01a7180cf2da5ced3c071aef8bd07))
+
+
+### 🚨　Tests
+
+* **pnginfo:** 添加测试用例的快照文件 ([660b489](https://github.com/bluelovers/auto1111-pnginfo/commit/660b4896bbc327465cef903e2a6918055d6c2119))
+
+
+
 ## [2.0.5](https://github.com/bluelovers/auto1111-pnginfo/compare/@bluelovers/auto1111-pnginfo@2.0.4...@bluelovers/auto1111-pnginfo@2.0.5) (2024-08-27)
 
 **Note:** Version bump only for package @bluelovers/auto1111-pnginfo
